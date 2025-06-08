@@ -14,7 +14,7 @@ export const initialize = (message: RequestMessage):
         InitializeResult => {
             
             let capabilities = {
-                
+                completionProvider: {}
             };
             
             let serverInfo = {
