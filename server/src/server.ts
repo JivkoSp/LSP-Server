@@ -1,5 +1,6 @@
 import log from "./log";
 import { initialize } from "./methods/initialize";
+import { completion } from "./methods/textDocument/completion";
 
 interface Message {
 	jsonrpc: string;
@@ -9,12 +10,13 @@ export interface RequestMessage extends Message {
 	id: number | string;
 	method: string;
 	params?: unknown[] | object;
-}
+}6
 
 type RequestMethod = (message: RequestMessage) => object;
 
 const methodLookup: Record<string, RequestMethod> = {
-  initialize,
+  initialize, 
+  "textDocument/completion": completion,
 };
 
 const respond = (id: RequestMessage['id'], result: object) => {
@@ -25,14 +27,12 @@ const respond = (id: RequestMessage['id'], result: object) => {
 
   log.write(header + message);
   process.stdout.write(header + message);
-
-
 };
 
 let buffer = "";
 
 process.stdin.on("data", (chunk) => {
-  
+
   buffer += chunk;
 
   while(true) {
