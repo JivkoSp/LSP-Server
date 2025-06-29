@@ -14,7 +14,8 @@ export const initialize = (message: RequestMessage):
         InitializeResult => {
             
             let capabilities = {
-                completionProvider: {}
+                completionProvider: {},
+                textDocumentSync: 1
             };
             
             let serverInfo = {
