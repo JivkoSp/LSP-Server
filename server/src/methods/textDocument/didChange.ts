@@ -1,20 +1,8 @@
 import { NotificationMessage } from "../../server";
 import log from "../../log";
+import { documents, VersionedTextDocumentIdentifier, TextDocumentContentChangeEvent } 
+from "../../documents";
 
-type DocumentUri = string;
-
-interface TextDocumentIdentifier {
-	uri: DocumentUri;
-}
-
-interface VersionedTextDocumentIdentifier extends TextDocumentIdentifier {
-    version: number;
-
-};
-
-interface TextDocumentContentChangeEvent {
-    text: string;
-};
 
 interface DidChangeTextDocumentParams {
 	textDocument: VersionedTextDocumentIdentifier;
@@ -22,5 +10,8 @@ interface DidChangeTextDocumentParams {
 }
 
 export const didChange = (message: NotificationMessage): void => {
-    log.write(message);
+    
+    const params = message.params as DidChangeTextDocumentParams;
+
+    documents.set(params.textDocument.uri, params.contentChanges[0].text);
 };
