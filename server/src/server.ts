@@ -80,7 +80,7 @@ process.stdin.on("data", (chunk) => {
       if (methodResult !== undefined) {
           respond(message.id, methodResult); 
       }
-    }
+    }   
 
     // Remove the processed message from the buffer
     buffer = buffer.slice(messageStart + contentLength);
