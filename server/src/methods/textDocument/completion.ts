@@ -1,4 +1,7 @@
 import { RequestMessage } from "../../server";
+import { documents, TextDocumentIdentifier } from "../../documents";
+import log from "../../log";
+import { stringify } from "querystring";
 
 const csharpKeywords = [
   { label: "abstract" },
@@ -119,7 +122,25 @@ interface CompletionList {
 	items: CompletionItem[];
 };
 
+interface Position {
+	line: number;
+	character: number;
+}
+
+interface TextDocumentPositionParams {
+	textDocument: TextDocumentIdentifier;
+	position: Position;
+}
+
+export interface CompletionParams extends TextDocumentPositionParams {
+
+}
+
 export const completion = (message: RequestMessage): CompletionList => {
+
+    const params = message.params as CompletionParams;
+    const content = documents.get(params.textDocument.uri);
+    
     return {
         isIncomplete: false,
         items: csharpKeywords
