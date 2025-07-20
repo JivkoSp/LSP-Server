@@ -1,88 +1,86 @@
-import log from "./log";
-import { initialize } from "./methods/initialize";
-import { completion } from "./methods/textDocument/completion";
-import { didChange } from "./methods/textDocument/didChange";
+import {
+    createConnection,
+    TextDocuments,
+    ProposedFeatures,
+    InitializeParams,
+    CompletionItem,
+    TextDocumentSyncKind,
+    InitializeResult
+} from 'vscode-languageserver/node';
 
-interface Message {
-	jsonrpc: string;
-}
+import {
+    TextDocument
+} from 'vscode-languageserver-textdocument';
 
-export interface NotificationMessage extends Message {
-  method: string;
-	params?: unknown[] | object;
-}
+// Create a connection for the server, using Node's IPC as a transport.
+// Also include all preview / proposed LSP features.
+const connection = createConnection(ProposedFeatures.all);
 
-export interface RequestMessage extends NotificationMessage {
-	id: number | string;
-}
+// Create a simple text document manager.
+const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-type RequestMethod = (message: RequestMessage) => 
-  ReturnType<typeof initialize> | ReturnType<typeof completion>;
-
-type NotificationMethod = (message: NotificationMessage)
- => ReturnType<typeof didChange>;
- 
-const methodLookup: Record<string, RequestMethod | NotificationMethod> = {
-  initialize, 
-  "textDocument/completion": completion,
-  "textDocument/didChange": didChange
-};
-
-const respond = (id: RequestMessage['id'], result: object | null) => {
-  
-  const message = JSON.stringify({id, result});
-  const messageLength = Buffer.byteLength(message, "utf-8");
-  const header = `Content-Length: ${messageLength}\r\n\r\n`;
-
-  log.write(header + message);
-  process.stdout.write(header + message);
-};
-
-let buffer = "";
-
-process.stdin.on("data", (chunk) => {
-
-  buffer += chunk;
-
-  while(true) {
-    // Check for the content length line
-    const lengthMatch = buffer.match(/Content-Length: (\d+)\r\n/);
-
-    // Check if the message is full
-    if(!lengthMatch) {
-       break; // Continue to add to the buffer
-    }
-
-    const contentLength = parseInt(lengthMatch[1], 10);
-
-    const messageStart = buffer.indexOf("\r\n\r\n") + 4;
-
-    // Continue unless the full message is in the buffer
-    if(buffer.length < messageStart + contentLength) {
-      break;
-    }
-
-    const rawMessage = buffer.slice(messageStart, messageStart + contentLength);
-
-    const message = JSON.parse(rawMessage);
-
-    log.write({id: message.id, 
-               method: message.method, 
-               params: message.params
-    });
-
-    const method = methodLookup[message.method];
-
-    if(method) {
-
-      const methodResult = method(message);
-
-      if (methodResult !== undefined) {
-          respond(message.id, methodResult); 
-      }
-    }   
-
-    // Remove the processed message from the buffer
-    buffer = buffer.slice(messageStart + contentLength);
-  } 
+connection.onInitialize((params: InitializeParams) => {
+    const result: InitializeResult = {
+        capabilities: {
+            textDocumentSync: TextDocumentSyncKind.Incremental,
+            // Tell the client that the server supports code completion.
+            completionProvider: {
+                resolveProvider: false
+            }
+        }
+    };
+    return result;
 });
+
+connection.onCompletion(
+    (_textDocumentPosition): CompletionItem[] => {
+        // The pass parameter contains the position of the text document in
+        // which code complete got requested. For the example we ignore this
+        // info and always provide the same completion items.
+        return [
+            { label: 'abstract' }, { label: 'as' }, { label: 'base' },
+            { label: 'bool' }, { label: 'break' }, { label: 'byte' },
+            { label: 'case' }, { label: 'catch' }, { label: 'char' },
+            { label: 'checked' }, { label: 'class' }, { label: 'const' },
+            { label: 'continue' }, { label: 'decimal' }, { label: 'default' },
+            { label: 'delegate' }, { label: 'do' }, { label: 'double' },
+            { label: 'else' }, { label: 'enum' }, { label: 'event' },
+            { label: 'explicit' }, { label: 'extern' }, { label: 'false' },
+            { label: 'finally' }, { label: 'fixed' }, { label: 'float' },
+            { label: 'for' }, { label: 'foreach' }, { label: 'goto' },
+            { label: 'if' }, { label: 'implicit' }, { label: 'in' },
+            { label: 'int' }, { label: 'interface' }, { label: 'internal' },
+            { label: 'is' }, { label: 'lock' }, { label: 'long' },
+            { label: 'namespace' }, { label: 'new' }, { label: 'null' },
+            { label: 'object' }, { label: 'operator' }, { label: 'out' },
+            { label: 'override' }, { label: 'params' }, { label: 'private' },
+            { label: 'protected' }, { label: 'public' }, { label: 'readonly' },
+            { label: 'ref' }, { label: 'return' }, { label: 'sbyte' },
+            { label: 'sealed' }, { label: 'short' }, { label: 'sizeof' },
+            { label: 'stackalloc' }, { label: 'static' }, { label: 'string' },
+            { label: 'struct' }, { label: 'switch' }, { label: 'this' },
+            { label: 'throw' }, { label: 'true' }, { label: 'try' },
+            { label: 'typeof' }, { label: 'uint' }, { label: 'ulong' },
+            { label: 'unchecked' }, { label: 'unsafe' }, { label: 'ushort' },
+            { label: 'using' }, { label: 'virtual' }, { label: 'void' },
+            { label: 'volatile' }, { label: 'while' }, { label: 'add' },
+            { label: 'alias' }, { label: 'ascending' }, { label: 'async' },
+            { label: 'await' }, { label: 'by' }, { label: 'descending' },
+            { label: 'dynamic' }, { label: 'equals' }, { label: 'from' },
+            { label: 'get' }, { label: 'global' }, { label: 'group' },
+            { label: 'into' }, { label: 'join' }, { label: 'let' },
+            { label: 'nameof' }, { label: 'notnull' }, { label: 'on' },
+            { label: 'orderby' }, { label: 'partial' }, { label: 'remove' },
+            { label: 'select' }, { label: 'set' }, { label: 'unmanaged' },
+            { label: 'value' }, { label: 'var' }, { label: 'when' },
+            { label: 'where' }, { label: 'yield' }
+        ];
+    }
+);
+
+// Make the text document manager listen on the connection
+// for open, change and close text document events.
+documents.listen(connection);
+
+// Listen on the connection
+connection.listen();
