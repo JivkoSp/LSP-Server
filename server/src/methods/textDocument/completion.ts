@@ -136,11 +136,27 @@ export interface CompletionParams extends TextDocumentPositionParams {
 
 }
 
-export const completion = (message: RequestMessage): CompletionList => {
+export const completion = (message: RequestMessage): CompletionList | null => {
 
     const params = message.params as CompletionParams;
     const content = documents.get(params.textDocument.uri);
     
+    if (!content) {
+        return null;
+    }
+
+    const currentLine = content.split('\n')[params.position.line];
+    const lineUntilCursor = currentLine.slice(0, params.position.character);
+    const currentWord = lineUntilCursor.replace(/.*\W(.*?)/, '$1');
+
+    log.write({
+        completion: {
+            currentLine,
+            lineUntilCursor,
+            currentWord
+        }
+    });
+
     return {
         isIncomplete: false,
         items: csharpKeywords
